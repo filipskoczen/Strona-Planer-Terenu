@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planer Zagospodarowania Działki - Land Planner</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/konva@9.2.0/konva.min.js"></script>
+    <!-- XLSX library for Excel import -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>🌳 Land Planner</h1>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button id="newProjectBtn" class="btn btn-tool" title="Nowy projekt">
+                        <span class="icon">📋</span>
+                        <span class="btn-label">Nowy</span>
+                    </button>
+                    <button id="saveProjectBtn" class="btn btn-tool btn-tool--success" title="Zapisz projekt (Ctrl+S)">
+                        <span class="icon">💾</span>
+                        <span class="btn-label">Zapisz</span>
+                    </button>
+                    <button id="loadProjectBtn" class="btn btn-tool" title="Wczytaj projekt">
+                        <span class="icon">📂</span>
+                        <span class="btn-label">Wczytaj</span>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group toolbar-group--history">
+                    <button id="undoBtn" class="btn btn-tool" title="Cofnij (Ctrl+Z)" disabled>
+                        <span class="icon">↶</span>
+                        <span class="btn-label">Cofnij</span>
+                    </button>
+                    <button id="redoBtn" class="btn btn-tool" title="Ponów (Ctrl+Y)" disabled>
+                        <span class="icon">↷</span>
+                        <span class="btn-label">Ponów</span>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button id="themeToggleBtn" class="btn btn-tool" title="Zmień motyw">
+                        <span class="icon">☀️</span>
+                        <span class="btn-label">Jasny</span>
+                    </button>
+                    <button id="shortcutsBtn" class="btn btn-tool" title="Skróty klawiszowe">
+                        <span class="icon">⌨️</span>
+                        <span class="btn-label">Skróty</span>
+                    </button>
+                    <button id="tutorialBtn" class="btn btn-tool" title="Samouczek">
+                        <span class="icon">❓</span>
+                        <span class="btn-label">Pomoc</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tools Toolbar -->
+            <div class="toolbar toolbar--tools">
+                <div class="toolbar-group">
+                    <button id="lassoBtn" class="btn btn-tool" title="Zaznacz ramką">
+                        <span class="icon">⬚</span>
+                        <span class="btn-label">Zaznacz</span>
+                    </button>
+                    <button id="clearLassoBtn" class="btn btn-tool" title="Wyłącz zaznaczanie">
+                        <span class="icon">✕</span>
+                        <span class="btn-label">Odznacz</span>
+                    </button>
+                    <button id="measureBtn" class="btn btn-tool" title="Pomiar odległości">
+                        <span class="icon">📏</span>
+                        <span class="btn-label">Pomiar</span>
+                    </button>
+                    <button id="clearMeasureBtn" class="btn btn-tool" title="Wyłącz pomiar">
+                        <span class="icon">🚫</span>
+                        <span class="btn-label">Wyczyść</span>
+                    </button>
+                    <button id="setbackBtn" class="btn btn-tool" title="Linie zabudowy">
+                        <span class="icon">🔲</span>
+                        <span class="btn-label">Zabudowa</span>
+                    </button>
+                    <button id="collisionBtn" class="btn btn-tool" title="Sprawdź kolizje">
+                        <span class="icon">⚠️</span>
+                        <span class="btn-label">Kolizje</span>
+                    </button>
+                    <button id="coverageBtn" class="btn btn-tool" title="Statystyki zabudowy">
+                        <span class="icon">📊</span>
+                        <span class="btn-label">Pokrycie</span>
+                    </button>
+                    <button id="angleBtn" class="btn btn-tool" title="Pomiar kąta">
+                        <span class="icon">📐</span>
+                        <span class="btn-label">Kąt</span>
+                    </button>
+                    <button id="perimeterBtn" class="btn btn-tool" title="Pomiar obwodu/powierzchni">
+                        <span class="icon">⬡</span>
+                        <span class="btn-label">Obwód</span>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button id="freehandBtn" class="btn btn-tool" title="Rysowanie odręczne">
+                        <span class="icon">✏️</span>
+                        <span class="btn-label">Ołówek</span>
+                    </button>
+                    <button id="polylineBtn" class="btn btn-tool" title="Rysowanie linii">
+                        <span class="icon">📐</span>
+                        <span class="btn-label">Linia</span>
+                    </button>
+                    <button id="bezierBtn" class="btn btn-tool" title="Krzywe Béziera">
+                        <span class="icon">〰️</span>
+                        <span class="btn-label">Krzywa</span>
+                    </button>
+                    <button id="stopDrawingBtn" class="btn btn-tool" title="Wyłącz rysowanie">
+                        <span class="icon">🛑</span>
+                        <span class="btn-label">Stop</span>
+                    </button>
+                    <button id="clearDrawingsBtn" class="btn btn-tool" title="Usuń wszystkie rysunki (ołówek, linia, krzywa)">
+                        <span class="icon">🗑️</span>
+                        <span class="btn-label">Usuń rysunki</span>
+                    </button>
+                    <button id="eraserBtn" class="btn btn-tool" title="Gąbka — kliknij rysunek aby go usunąć">
+                        <span class="icon">🧽</span>
+                        <span class="btn-label">Gąbka</span>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button id="addTextBtn" class="btn btn-tool" title="Dodaj tekst">
+                        <span class="icon">📝</span>
+                        <span class="btn-label">Tekst</span>
+                    </button>
+                    <button id="addArrowBtn" class="btn btn-tool" title="Dodaj strzałkę z opisem">
+                        <span class="icon">➡️</span>
+                        <span class="btn-label">Strzałka</span>
+                    </button>
+                    <button id="addNoteBtn" class="btn btn-tool" title="Dodaj notatkę">
+                        <span class="icon">📌</span>
+                        <span class="btn-label">Notatka</span>
+                    </button>
+                    <button id="stopAnnotationBtn" class="btn btn-tool" title="Wyłącz adnotacje">
+                        <span class="icon">✕</span>
+                        <span class="btn-label">Stop</span>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button id="customElementBtn" class="btn btn-tool" title="Dodaj własny element">
+                        <span class="icon">➕</span>
+                        <span class="btn-label">Własny</span>
+                    </button>
+                    <button id="exportMenuBtn" class="btn btn-tool" title="Eksport">
+                        <span class="icon">📤</span>
+                        <span class="btn-label">Eksport</span>
+                    </button>
+                    <button id="snapToggleBtn" class="btn btn-tool active" title="Snap do elementów">
+                        <span class="icon">🧲</span>
+                        <span class="btn-label">Snap</span>
+                    </button>
+                    <button id="groupBtn" class="btn btn-tool" title="Grupuj (Ctrl+G)">
+                        <span class="icon">📦</span>
+                        <span class="btn-label">Grupuj</span>
+                    </button>
+                    <button id="ungroupBtn" class="btn btn-tool" title="Rozgrupuj (Ctrl+Shift+G)">
+                        <span class="icon">📭</span>
+                        <span class="btn-label">Rozgrupuj</span>
+                    </button>
+                    <button id="view3dBtn" class="btn btn-tool" title="Widok 3D">
+                        <span class="icon">🏗️</span>
+                        <span class="btn-label">3D</span>
+                    </button>
+                    <button id="autosaveToggleBtn" class="btn btn-tool active" title="Autozapis">
+                        <span class="icon">💾</span>
+                        <span class="btn-label">Auto</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Projekt Info -->
+            <div class="project-info">
+                <h3>Informacje projektu <span class="panel-toggle">▼</span></h3>
+                <div id="projectInfo" class="info-content collapsible-content">
+                    <p>Brak aktywnego projektu</p>
+                </div>
+            </div>
+
+            <!-- Elements Panel -->
+            <div class="elements-panel">
+                <h3>Elementy <span class="panel-toggle">▼</span></h3>
+                <div id="elementsList" class="elements-list collapsible-content">
+
+                    <div class="element-group">
+                        <h4>Budynki</h4>
+                        <div class="element-grid">
+                            <button class="element-btn" data-element="house" draggable="true" title="Dom">
+                                <span class="icon">🏠</span> Dom
+                            </button>
+                            <button class="element-btn" data-element="garage" draggable="true" title="Garaż">
+                                <span class="icon">🛠️</span> Garaż
+                            </button>
+                            <button class="element-btn" data-element="porch" draggable="true" title="Weranda/Ganek">
+                                <span class="icon">🏡</span> Weranda
+                            </button>
+                            <button class="element-btn" data-element="shed" draggable="true" title="Szopa">
+                                <span class="icon">🏚️</span> Szopa
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="element-group">
+                        <h4>Ogród i Roślinność</h4>
+                        <div class="element-grid">
+                            <button class="element-btn" data-element="garden" draggable="true" title="Ogród">
+                                <span class="icon">🌾</span> Ogród
+                            </button>
+                            <button class="element-btn" data-element="crop" draggable="true" title="Pole uprawne">
+                                <span class="icon">🌽</span> Pole
+                            </button>
+                            <button class="element-btn" data-element="tree" draggable="true" title="Drzewo">
+                                <span class="icon">🌲</span> Drzewo
+                            </button>
+                            <button class="element-btn" data-element="fruit_tree" draggable="true" title="Drzewo owocowe">
+                                <span class="icon">🍎</span> Owocowe
+                            </button>
+                            <button class="element-btn" data-element="flower" draggable="true" title="Rabata">
+                                <span class="icon">🌸</span> Rabata
+                            </button>
+                            <button class="element-btn" data-element="flower_bed" draggable="true" title="Rabata kwiatowa">
+                                <span class="icon">🌹</span> Kwiaty
+                            </button>
+                            <button class="element-btn" data-element="blueberry" draggable="true" title="Borówka">
+                                <span class="icon">🫐</span> Borówka
+                            </button>
+                            <button class="element-btn" data-element="currant" draggable="true" title="Porzeczka">
+                                <span class="icon">🍒</span> Porzeczka
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="element-group">
+                        <h4>Woda i Ścieżki</h4>
+                        <div class="element-grid">
+                            <button class="element-btn" data-element="pond" draggable="true" title="Jeziorko/Basen">
+                                <span class="icon">💧</span> Jeziorko
+                            </button>
+                            <button class="element-btn" data-element="well" draggable="true" title="Studnia">
+                                <span class="icon">🚰</span> Studnia
+                            </button>
+                            <button class="element-btn" data-element="path" draggable="true" title="Ścieżka">
+                                <span class="icon">🚶</span> Ścieżka
+                            </button>
+                            <button class="element-btn" data-element="driveway" draggable="true" title="Podjazd">
+                                <span class="icon">🚗</span> Podjazd
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="element-group">
+                        <h4>Inne</h4>
+                        <div class="element-grid">
+                            <button class="element-btn" data-element="fence" draggable="true" title="Ogrodzenie">
+                                <span class="icon">🔒</span> Ogrodzenie
+                            </button>
+                            <button class="element-btn" data-element="bench" draggable="true" title="Ławka">
+                                <span class="icon">🪑</span> Ławka
+                            </button>
+                            <button class="element-btn" data-element="light" draggable="true" title="Oświetlenie">
+                                <span class="icon">💡</span> Lampa
+                            </button>
+                            <button class="element-btn" data-element="barbecue" draggable="true" title="Grill/Palenisko">
+                                <span class="icon">🔥</span> Grill
+                            </button>
+                            <button class="element-btn" data-element="swing" draggable="true" title="Huśtawka">
+                                <span class="icon">🎪</span> Huśtawka
+                            </button>
+                            <button class="element-btn" data-element="compost" draggable="true" title="Kompostownik">
+                                <span class="icon">📦</span> Kompost
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Search Elements -->
+            <div class="search-panel">
+                <input type="text" id="elementSearch" placeholder="🔍 Szukaj elementów..." class="search-input">
+            </div>
+
+            <!-- User Layers -->
+            <div class="user-layers-panel">
+                <h3>Warstwy użytkownika 
+                    <button id="addLayerBtn" class="add-layer-btn" title="Dodaj warstwę">+</button>
+                    <span class="panel-toggle">▼</span>
+                </h3>
+                <div id="userLayersList" class="user-layers-list collapsible-content">
+                    <div class="empty-state-small">Brak warstw. Kliknij "+" aby dodać.</div>
+                </div>
+            </div>
+
+            <!-- Layers Panel -->
+            <div class="layers-panel">
+                <h3>Warstwy <span class="panel-toggle">▼</span></h3>
+                <div id="layersList" class="layers-list collapsible-content"></div>
+            </div>
+
+            <!-- Minimap -->
+            <div class="minimap-panel">
+                <h3>Podgląd <span class="panel-toggle">▼</span></h3>
+                <div id="minimapContainer" class="minimap-content collapsible-content"></div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Canvas Area -->
+            <div class="canvas-container" id="canvasContainer">
+                <div id="canvas"></div>
+            </div>
+
+            <!-- View Controls -->
+            <div class="view-controls">
+                <button id="zoomInBtn" class="control-btn" title="Powiększ (Ctrl++)">+</button>
+                <button id="zoomOutBtn" class="control-btn" title="Zmniejsz (Ctrl+-)">−</button>
+                <div class="control-divider"></div>
+                <button id="fitViewBtn" class="control-btn" title="Dopasuj widok">⊡</button>
+                <button id="resetViewBtn" class="control-btn control-btn--sm" title="Reset widoku">↺</button>
+            </div>
+
+            <!-- Multi-selection toolbar -->
+            <div id="selectionToolbar" class="selection-toolbar hidden">
+                <span class="selection-info"><span id="selectionCount">0</span> zaznaczonych</span>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.alignSelected('left')" title="Wyrównaj do lewej">◁</button>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.alignSelected('centerH')" title="Centruj poziomo">⊡</button>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.alignSelected('right')" title="Wyrównaj do prawej">▷</button>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.alignSelected('top')" title="Wyrównaj do góry">△</button>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.alignSelected('centerV')" title="Centruj pionowo">⊡</button>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.alignSelected('bottom')" title="Wyrównaj do dołu">▽</button>
+                <div class="toolbar-divider"></div>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.alignSelected('distributeH')" title="Rozkład poziomy">⫶</button>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.alignSelected('distributeV')" title="Rozkład pionowy">⫶</button>
+                <div class="toolbar-divider"></div>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.bringToFront()" title="Na przód">⬆</button>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.sendToBack()" title="Na tył">⬇</button>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.flipSelected('x')" title="Odbij poziomo">↔</button>
+                <button class="btn btn-tool btn-sm" onclick="window.selectionManager?.flipSelected('y')" title="Odbij pionowo">↕</button>
+                <div class="toolbar-divider"></div>
+                <button class="btn btn-tool btn-sm btn-danger" onclick="window.selectionManager?.deleteSelected()" title="Usuń zaznaczone">🗑️</button>
+            </div>
+
+            <!-- Coverage Stats Panel -->
+            <div id="coveragePanel" class="coverage-panel hidden">
+                <div class="coverage-header">
+                    <h4>📊 Statystyki zabudowy</h4>
+                    <button class="close-btn" onclick="document.getElementById('coveragePanel').classList.add('hidden')">✕</button>
+                </div>
+                <div id="coverageContent"></div>
+            </div>
+
+            <!-- Coordinates Display -->
+            <div class="coordinates-display" id="coordinatesDisplay">
+                X: 0.0m &nbsp;|&nbsp; Y: 0.0m &nbsp;|&nbsp; Zoom: 100%
+            </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <aside class="properties-panel">
+            <div class="panel-header">
+                <h3>Właściwości</h3>
+                <button id="closePropertiesBtn" class="close-btn" style="display:none">✕</button>
+            </div>
+
+            <div id="propertiesContent" class="properties-content">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🗺️</div>
+                    <p>Kliknij element na planszy,<br>aby edytować właściwości</p>
+                    <p class="empty-state-hint">Lub wybierz element z listy po lewej</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modal: New Project -->
+    <div id="newProjectModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nowy Projekt</h2>
+                <button class="modal-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-field">
+                    <label for="projectName">Nazwa projektu</label>
+                    <input type="text" id="projectName" placeholder="np. Moja działka" maxlength="50">
+                </div>
+                <div class="form-row" id="dimensionFields">
+                    <div class="form-field">
+                        <label for="landWidth">Szerokość (metry)</label>
+                        <input type="number" id="landWidth" min="5" max="500" value="30" step="1">
+                    </div>
+                    <div class="form-field">
+                        <label for="landHeight">Długość (metry)</label>
+                        <input type="number" id="landHeight" min="5" max="500" value="40" step="1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="gridSize">Siatka (metry)</label>
+                        <input type="number" id="gridSize" min="0.5" max="10" value="1" step="0.5">
+                    </div>
+                    <div class="form-field">
+                        <label for="landColor">Kolor działki</label>
+                        <input type="color" id="landColor" value="#1e293b">
+                    </div>
+                </div>
+                <div class="form-field" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="importPlotCheckbox" style="margin-right: 8px;">
+                        <span><strong>Importuj działkę z Geoportalu</strong></span>
+                    </label>
+                </div>
+                <div id="importPlotFields" style="display: none; margin-top: 12px; padding: 12px; background-color: var(--bg-tertiary); border-radius: var(--radius-md);">
+                    <p style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px;">📊 Wgraj plik z działką:</p>
+                    <p style="font-size: 11px; color: var(--primary-color); margin-bottom: 12px; padding: 8px; background-color: rgba(var(--primary-rgb, 59, 130, 246), 0.1); border-radius: 4px;">ℹ️ Obsługiwane: Excel (.xlsx), GeoJSON (.json), KML (.kml)</p>
+                    <div class="form-field">
+                        <label for="projectImportFile">Plik działki <small>(.xlsx, .xls, .xlsc, .geojson, .kml, .json)</small></label>
+                        <input type="file" id="projectImportFile" accept=".xlsx,.xls,.xlsc,.geojson,.kml,.json,application/json,application/vnd.google-earth.kml+xml" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;">
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 8px;">
+                        💡 KML/GeoJSON: wyeksportuj z map (Google Maps, Geoportal)<br>
+                        💡 Excel: pobierz z <a href="https://www.geoportal.gov.pl" target="_blank" style="color: var(--primary-color);">geoportal.gov.pl</a>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelNewProjectBtn" class="btn btn-secondary">Anuluj</button>
+                <button id="confirmNewProjectBtn" class="btn btn-primary">Utwórz projekt</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Export -->
+    <div id="exportModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Eksport Projektu</h2>
+                <button class="modal-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <button id="exportPngBtn" class="btn btn-primary btn-block">
+                    <span class="icon">🖼️</span> Eksport jako PNG
+                </button>
+                <button id="exportJsonBtn" class="btn btn-primary btn-block">
+                    <span class="icon">📄</span> Eksport jako JSON
+                </button>
+                <button id="exportPdfBtn" class="btn btn-primary btn-block">
+                    <span class="icon">📋</span> Eksport jako PDF
+                </button>
+                <button id="exportSvgBtn" class="btn btn-primary btn-block">
+                    <span class="icon">🎨</span> Eksport jako SVG
+                </button>
+                <button id="exportHiResBtn" class="btn btn-primary btn-block">
+                    <span class="icon">🔍</span> Eksport PNG (wysoka rozdzielczość)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Plot Details from Geoportal -->
+    <div id="plotDetailsModal" class="modal hidden">
+        <div class="modal-content modal-content--small">
+            <div class="modal-header">
+                <h2>📊 Szczegóły Działki</h2>
+                <button class="modal-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="plot-details-grid">
+                    <div class="plot-detail-item">
+                        <label>Numer działki:</label>
+                        <span id="plotDetailNumber" class="plot-detail-value">-</span>
+                    </div>
+                    <div class="plot-detail-item">
+                        <label>Kod TERYT:</label>
+                        <span id="plotDetailTERYT" class="plot-detail-value">-</span>
+                    </div>
+                    <div class="plot-detail-item">
+                        <label>Obręb:</label>
+                        <span id="plotDetailObreb" class="plot-detail-value">-</span>
+                    </div>
+                    <div class="plot-detail-item">
+                        <label>Powierzchnia:</label>
+                        <span id="plotDetailArea" class="plot-detail-value">-</span>
+                    </div>
+                    <div class="plot-detail-item">
+                        <label>Wymiary (metry):</label>
+                        <span id="plotDetailDimensions" class="plot-detail-value">-</span>
+                    </div>
+                    <div class="plot-detail-item">
+                        <label>Typ geometryczny:</label>
+                        <span id="plotDetailGeometry" class="plot-detail-value">-</span>
+                    </div>
+                    <div class="plot-detail-item">
+                        <label>Liczba wierzchołków:</label>
+                        <span id="plotDetailVertices" class="plot-detail-value">-</span>
+                    </div>
+                    <div class="plot-detail-item">
+                        <label>Źródło danych:</label>
+                        <span id="plotDetailSource" class="plot-detail-value">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeplotDetailsBtn" class="btn btn-primary">Zamknij</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Importuję działki...</div>
+            <div class="loading-info" id="loadingInfo"></div>
+            <div class="loading-progress">
+                <div id="loadingProgressBar" class="loading-progress-bar" style="width: 0%"></div>
+            </div>
+            <div class="loading-counter">
+                <span id="loadingCurrent" class="current">0</span> / <span id="loadingTotal">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="loadProjectInput" accept=".json" hidden>
+
+    <!-- Scripts -->
+    <script src="js/utils/constants.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/utils/sanitizer.js"></script>
+    <script src="js/models/Element.js"></script>
+    <script src="js/models/Project.js"></script>
+    <script src="js/manager/canvasManager.js"></script>
+    <script src="js/manager/elementFactory.js"></script>
+    <script src="js/manager/projectManager.js"></script>
+    <script src="js/manager/storageManager.js"></script>
+    <script src="js/manager/geoportalManager.js"></script>
+    <script src="js/manager/historyManager.js"></script>
+    <script src="js/manager/selectionManager.js"></script>
+    <script src="js/manager/measurementManager.js"></script>
+    <script src="js/manager/exportManager.js"></script>
+    <script src="js/manager/mapOverlayManager.js"></script>
+    <script src="js/manager/uiEnhancementsManager.js"></script>
+    <script src="js/manager/advancedElementsManager.js"></script>
+    <script src="js/manager/infrastructureManager.js"></script>
+    <script src="js/manager/drawingManager.js"></script>
+    <script src="js/manager/snapManager.js"></script>
+    <script src="js/manager/groupManager.js"></script>
+    <script src="js/manager/annotationManager.js"></script>
+    <script src="js/manager/layerManager.js"></script>
+    <script src="js/manager/autosaveManager.js"></script>
+    <script src="js/manager/view3dManager.js"></script>
+    <script src="js/manager/uiManager.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

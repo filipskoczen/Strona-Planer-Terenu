@@ -1,0 +1,27 @@
+{
+  "name": "geoportal-proxy-server",
+  "version": "1.0.0",
+  "description": "CORS Proxy server for Geoportal API integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "geoportal",
+    "gugik",
+    "proxy",
+    "cors",
+    "parcel"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
